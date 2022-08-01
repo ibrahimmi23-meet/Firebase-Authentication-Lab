@@ -3,8 +3,9 @@ from flask import session as login_session
 import pyrebase
 
 
-
 config = {
+  
+
   'apiKey': "AIzaSyAVCMdA2KL1Bi5R5MiAy-T82OEW7CbtcgA",
   'authDomain': "clab-17389.firebaseapp.com",
   'projectId': "clab-17389",
@@ -14,8 +15,9 @@ config = {
   'measurementId': "G-DZ5BDQ5759",
   "databaseURL":""
 }
-firebase= pyrebase.initialize_app(config)
-auth = firebase.auth() 
+
+firebase = pyrebase.initialize_app(config)
+auth = firebase.auth()
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.config['SECRET_KEY'] = 'super-secret-key'
@@ -23,27 +25,55 @@ app.config['SECRET_KEY'] = 'super-secret-key'
 
 @app.route('/', methods=['GET', 'POST'])
 def signin():
-    return render_template("signin.html")
+   error = ""
+   if request.method == 'POST':
+       email = request.form['email']
+       password = request.form['password']
+       try:
+            login_session['user'] = auth.sign_in_with_email_and_password(email, password)
+            return redirect(url_for('add_tweet'))
+       except:
+           error = "Authentication failed"
+           return render_template("signin.html")
+   else :
+       return render_template("signin.html")
 
-app.route('/signup', methods=['GET', 'POST'])
+
+
+
+@app.route('/signup', methods=['GET', 'POST'])
 def signup():
    error = ""
    if request.method == 'POST':
        email = request.form['email']
        password = request.form['password']
        try:
-            login_session['user'] = tim
-auth.create_user_with_email_and_password(email, password)
-           return redirect(url_for('home'))
+            login_session['user'] = auth.create_user_with_email_and_password(email, password)
+            return redirect(url_for('add_tweet'))
        except:
-           error = "Authentication failed"
-   return render_template("signup.html")
+           return render_template("signup.html", error = 'there is a previous on or a weak password')
+   else:
+    return render_template("signup.html")
 
 
+
+
+  
 
 @app.route('/add_tweet', methods=['GET', 'POST'])
 def add_tweet():
     return render_template("add_tweet.html")
+
+
+
+
+@app.route('/signout')
+def signout():
+    login_session['user'] = None
+    auth.current_user = None
+    return render_template("out.html")
+
+   
 
 
 if __name__ == '__main__':
